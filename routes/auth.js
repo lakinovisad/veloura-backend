@@ -1,6 +1,8 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { body, validationResult } = require('express-validator');
+const bcrypt = require('bcrypt');
 
 const router = express.Router();
 
@@ -8,144 +10,84 @@ const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'veloura-secret-key-2024';
 
 // POST /register - registruje novog korisnika
-router.post('/register', async (req, res) => {
-  try {
+router.post(
+  '/register',
+  [
+    body('name').notEmpty().withMessage('Ime je obavezno'),
+    body('email').isEmail().withMessage('Nevalidna email adresa'),
+    body('password').isLength({ min: 6 }).withMessage('Lozinka mora imati najmanje 6 karaktera'),
+    body('role').isIn(['klijent', 'salon']).withMessage('Neispravna uloga'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const { name, email, password, role, phone } = req.body;
+    const { v4: uuidv4 } = require('uuid');
+    const id = uuidv4();
 
-    // Validacija input-a
-    if (!name || !email || !password || !role) {
-      return res.status(400).json({
-        success: false,
-        message: 'Sva polja su obavezna (name, email, password, role)'
-      });
+    try {
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      const db = require('../db').db;
+      db.run(
+        `INSERT INTO Users (id, name, email, password, role, phone) VALUES (?, ?, ?, ?, ?, ?)`,
+        [id, name, email, hashedPassword, role, phone],
+        function (err) {
+          if (err) {
+            return res.status(500).json({ error: 'Greška pri registraciji korisnika' });
+          }
+          res.status(201).json({ message: 'Korisnik uspešno registrovan', id });
+        }
+      );
+    } catch (err) {
+      res.status(500).json({ error: 'Interna greška servera' });
     }
-
-    // Provera role
-    if (!['klijent', 'salon'].includes(role)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Role mora biti "klijent" ili "salon"'
-      });
-    }
-
-    // Provera da li email već postoji
-    const emailExists = await User.emailExists(email);
-    if (emailExists) {
-      return res.status(409).json({
-        success: false,
-        message: 'Korisnik sa ovim email-om već postoji'
-      });
-    }
-
-    // Kreiraj novog korisnika
-    const newUser = await User.create({
-      name,
-      email,
-      password,
-      role,
-      phone: phone || null
-    });
-
-    // Generiši JWT token
-    const token = jwt.sign(
-      { 
-        id: newUser.id, 
-        email: newUser.email, 
-        role: newUser.role 
-      },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    res.status(201).json({
-      success: true,
-      message: 'Korisnik uspešno registrovan',
-      data: {
-        user: {
-          id: newUser.id,
-          name: newUser.name,
-          email: newUser.email,
-          role: newUser.role,
-          phone: newUser.phone
-        },
-        token
-      }
-    });
-
-  } catch (error) {
-    console.error('Greška pri registraciji:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Greška na serveru pri registraciji'
-    });
   }
-});
+);
 
 // POST /login - autentifikuje korisnika
-router.post('/login', async (req, res) => {
-  try {
+router.post(
+  '/login',
+  [
+    body('email').isEmail().withMessage('Nevalidna email adresa'),
+    body('password').notEmpty().withMessage('Lozinka je obavezna'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const { email, password } = req.body;
+    const db = require('../db').db;
 
-    // Validacija input-a
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email i lozinka su obavezni'
-      });
-    }
-
-    // Pronađi korisnika po email-u
-    const user = await User.findByEmail(email);
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Neispravan email ili lozinka'
-      });
-    }
-
-    // Proveri lozinku
-    const isValidPassword = await User.verifyPassword(password, user.password);
-    if (!isValidPassword) {
-      return res.status(401).json({
-        success: false,
-        message: 'Neispravan email ili lozinka'
-      });
-    }
-
-    // Generiši JWT token
-    const token = jwt.sign(
-      { 
-        id: user.id, 
-        email: user.email, 
-        role: user.role 
-      },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    res.json({
-      success: true,
-      message: 'Uspešna prijava',
-      data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          phone: user.phone
-        },
-        token
+    db.get(`SELECT * FROM Users WHERE email = ?`, [email], async (err, user) => {
+      if (err) {
+        return res.status(500).json({ error: 'Greška na serveru' });
       }
-    });
+      if (!user) {
+        return res.status(401).json({ error: 'Neispravan email ili lozinka' });
+      }
 
-  } catch (error) {
-    console.error('Greška pri prijavi:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Greška na serveru pri prijavi'
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ error: 'Neispravan email ili lozinka' });
+      }
+
+      const token = jwt.sign(
+        { userId: user.id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      res.json({ token });
     });
   }
-});
+);
 
 // GET /profile - dohvati profil trenutnog korisnika (zaštićen endpoint)
 router.get('/profile', async (req, res) => {

@@ -8,17 +8,24 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "sqlite3": "^5.1.6",
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
     "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-validator": "^7.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "sqlite3": "^5.1.6",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
-  "keywords": ["express", "sqlite", "api", "veloura"],
+  "keywords": [
+    "express",
+    "sqlite",
+    "api",
+    "veloura"
+  ],
   "author": "",
   "license": "MIT"
-} 
+}
