@@ -116,6 +116,6 @@ const initDatabase = () => {
 };
 
 // Inicijalizuj bazu pri pokretanju
-initDatabase().catch(console.error);
+// initDatabase().catch(console.error);
 
-module.exports = db; 
+module.exports = { db, initDatabase }; 

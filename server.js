@@ -1,5 +1,8 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
+const { initDatabase } = require('./db');
 const authRoutes = require('./routes/auth');
 const salonRoutes = require('./routes/salons');
 const serviceRoutes = require('./routes/services');
@@ -7,7 +10,8 @@ const appointmentRoutes = require('./routes/appointments');
 const reviewRoutes = require('./routes/reviews');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const START_PORT = process.env.PORT || 3001;
+const MAX_PORT = 3010;
 
 // Middleware
 app.use(cors());
@@ -64,11 +68,64 @@ app.use('*', (req, res) => {
   });
 });
 
+// Funkcija za pokretanje servera na određenom portu
+const startServerOnPort = (port) => {
+  return new Promise((resolve, reject) => {
+    const server = app.listen(port, () => {
+      console.log(`🚀 Veloura API server pokrenut na portu ${port}`);
+      console.log(`📡 API dostupan na: http://localhost:${port}`);
+      console.log(`🔐 Auth endpoint: http://localhost:${port}/api/auth`);
+      resolve(server);
+    });
+
+    server.on('error', (error) => {
+      if (error.code === 'EADDRINUSE') {
+        console.log(`⚠️ Port ${port} je zauzet, pokušavam sledeći...`);
+        reject(error);
+      } else {
+        console.error(`❌ Greška pri pokretanju servera na portu ${port}:`, error);
+        reject(error);
+      }
+    });
+  });
+};
+
+// Funkcija za pokretanje servera sa automatskim pronalaženjem slobodnog porta
+const startServer = async () => {
+  try {
+    console.log('🗄️ Inicijalizujem bazu podataka...');
+    await initDatabase();
+    console.log('✅ Baza podataka uspešno inicijalizovana');
+    
+    // Pokušaj da pokreneš server na različitim portovima
+    for (let port = START_PORT; port <= MAX_PORT; port++) {
+      try {
+        console.log(`🔍 Pokušavam da pokrenem server na portu ${port}...`);
+        await startServerOnPort(port);
+        console.log(`✅ Server uspešno pokrenut na portu ${port}!`);
+        return; // Uspesno pokrenut, izađi iz funkcije
+      } catch (error) {
+        if (error.code === 'EADDRINUSE' && port < MAX_PORT) {
+          continue; // Pokušaj sledeći port
+        } else if (port === MAX_PORT) {
+          // Dostigli smo maksimalni port
+          console.error(`❌ Nije moguće pokrenuti server na portovima ${START_PORT}-${MAX_PORT}`);
+          console.error('🛑 Svi portovi su zauzeti. Zaustavljam server.');
+          process.exit(1);
+        } else {
+          // Nešto drugo je pošlo naopako
+          throw error;
+        }
+      }
+    }
+  } catch (error) {
+    console.error('❌ Greška pri inicijalizaciji baze podataka:', error);
+    console.error('🛑 Server se neće pokrenuti zbog greške u bazi podataka');
+    process.exit(1);
+  }
+};
+
 // Pokreni server
-app.listen(PORT, () => {
-  console.log(`🚀 Veloura API server pokrenut na portu ${PORT}`);
-  console.log(`📡 API dostupan na: http://localhost:${PORT}`);
-  console.log(`🔐 Auth endpoint: http://localhost:${PORT}/api/auth`);
-});
+startServer();
 
 module.exports = app; 
