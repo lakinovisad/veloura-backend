@@ -33,10 +33,18 @@ class Appointment {
   // Dohvati sve termine za salon
   static findBySalonId(salon_id) {
     return new Promise((resolve, reject) => {
-      db.all('SELECT * FROM Appointments WHERE salon_id = ? ORDER BY datum DESC, vreme DESC', [salon_id], (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
-      });
+      db.all(
+        `SELECT a.*, u.name AS korisnik_ime, u.email AS korisnik_email
+         FROM Appointments a
+         JOIN Users u ON a.user_id = u.id
+         WHERE a.salon_id = ?
+         ORDER BY a.datum DESC, a.vreme DESC`,
+        [salon_id],
+        (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        }
+      );
     });
   }
 

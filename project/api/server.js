@@ -12,7 +12,11 @@ const START_PORT = process.env.PORT || 3001;
 const MAX_PORT = 3010;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*', // ili preciznije: ['http://localhost:3000', 'https://moj-front.netlify.app']
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcrypt');
+const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -25,35 +26,42 @@ router.post(
     }
 
     const { name, email, password, role, phone } = req.body;
-    const { v4: uuidv4 } = require('uuid');
-    const id = uuidv4();
 
     try {
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      // ✅ Provera da li korisnik već postoji
+      const userExists = await User.existsByEmail(email);
+      if (userExists) {
+        return res.status(409).json({ error: 'Korisnik sa ovim email-om već postoji' });
+      }
 
-      const db = require('../db').db;
-      db.run(
-        `INSERT INTO Users (id, name, email, password, role, phone) VALUES (?, ?, ?, ?, ?, ?)`,
-        [id, name, email, hashedPassword, role, phone],
-        function (err) {
-          if (err) {
-            return res.status(500).json({ error: 'Greška pri registraciji korisnika' });
-          }
-          res.status(201).json({ message: 'Korisnik uspešno registrovan', id });
-        }
+      // 🔐 Hash lozinke i kreiranje korisnika
+      const newUser = await User.create({ name, email, password, role, phone });
+
+      // 🎟️ Generiši JWT token
+      const token = jwt.sign(
+        { id: newUser.id, role: newUser.role },
+        JWT_SECRET,
+        { expiresIn: '7d' }
       );
+
+      res.status(201).json({
+        message: 'Registracija uspešna',
+        user: newUser,
+        token,
+      });
+
     } catch (err) {
-      res.status(500).json({ error: 'Interna greška servera' });
+      console.error('Greška pri registraciji:', err);
+      res.status(500).json({ error: 'Greška na serveru' });
     }
   }
 );
 
-// POST /login - autentifikuje korisnika
+// POST /login - autentifikacija korisnika
 router.post(
   '/login',
   [
-    body('email').isEmail().withMessage('Nevalidna email adresa'),
+    body('email').isEmail().withMessage('Unesite validan email'),
     body('password').notEmpty().withMessage('Lozinka je obavezna'),
   ],
   async (req, res) => {
@@ -63,29 +71,37 @@ router.post(
     }
 
     const { email, password } = req.body;
-    const db = require('../db').db;
 
-    db.get(`SELECT * FROM Users WHERE email = ?`, [email], async (err, user) => {
-      if (err) {
-        return res.status(500).json({ error: 'Greška na serveru' });
-      }
+    try {
+      const user = await User.findByEmail(email);
       if (!user) {
-        return res.status(401).json({ error: 'Neispravan email ili lozinka' });
+        return res.status(401).json({ error: 'Pogrešan email ili lozinka' });
       }
 
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(401).json({ error: 'Neispravan email ili lozinka' });
+      const isPasswordValid = await User.verifyPassword(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: 'Pogrešan email ili lozinka' });
       }
 
       const token = jwt.sign(
-        { userId: user.id, role: user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: '24h' }
+        { id: user.id, role: user.role },
+        JWT_SECRET,
+        { expiresIn: '7d' }
       );
 
-      res.json({ token });
-    });
+      // Ne vraćamo lozinku nazad
+      const { password: _, ...safeUser } = user;
+
+      res.status(200).json({
+        message: 'Uspešna prijava',
+        user: safeUser,
+        token,
+      });
+
+    } catch (err) {
+      console.error('Greška pri loginu:', err);
+      res.status(500).json({ error: 'Greška na serveru' });
+    }
   }
 );
 
@@ -139,6 +155,23 @@ router.get('/profile', async (req, res) => {
       success: false,
       message: 'Greška na serveru'
     });
+  }
+});
+
+// GET /me - vrati podatke o trenutno prijavljenom korisniku
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'Korisnik nije pronađen' });
+    }
+
+    const { password: _, ...safeUser } = user; // Ukloni lozinku
+    res.status(200).json({ user: safeUser });
+
+  } catch (err) {
+    console.error('Greška pri dohvatanju korisnika:', err);
+    res.status(500).json({ error: 'Greška na serveru' });
   }
 });
 
