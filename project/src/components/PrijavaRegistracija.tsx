@@ -10,14 +10,19 @@ import {
   Heart,
   Sparkles,
   Shield,
-  CheckCircle
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const PrijavaRegistracija = () => {
+  const { login, register, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<'korisnici' | 'saloni'>('korisnici');
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState<string>('');
   const [formData, setFormData] = useState({
     ime: '',
     email: '',
@@ -30,12 +35,43 @@ const PrijavaRegistracija = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear errors when user starts typing
+    if (error) setError('');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log('Form submitted:', formData);
+    setError('');
+    setSuccess('');
+
+    try {
+      if (isLogin) {
+        // Login
+        await login({
+          email: formData.email,
+          password: formData.lozinka
+        });
+        setSuccess('Uspešna prijava!');
+        // Redirect will be handled by AuthContext
+      } else {
+        // Register
+        if (formData.lozinka !== formData.potvrdiLozinku) {
+          setError('Lozinke se ne poklapaju');
+          return;
+        }
+        
+        await register({
+          name: formData.ime,
+          email: formData.email,
+          password: formData.lozinka,
+          role: activeTab === 'korisnici' ? 'klijent' : 'salon'
+        });
+        setSuccess('Uspešna registracija!');
+        // Redirect will be handled by AuthContext
+      }
+    } catch (error: any) {
+      setError(error.message || 'Greška pri obradi zahteva');
+    }
   };
 
   return (
@@ -121,6 +157,22 @@ const PrijavaRegistracija = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                <span className="text-red-700 text-sm">{error}</span>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {success && (
+              <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
+                <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                <span className="text-green-700 text-sm">{success}</span>
+              </div>
+            )}
+
             {/* Name/Salon Name Field (only for registration) */}
             {!isLogin && (
               <div className="relative">
@@ -210,10 +262,20 @@ const PrijavaRegistracija = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              className="group w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 px-6 rounded-2xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+              disabled={isLoading}
+              className="group w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 px-6 rounded-2xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              <Sparkles size={20} />
-              {isLogin ? 'Prijavi se' : 'Registruj se'}
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  {isLogin ? 'Prijavljam se...' : 'Registrujem se...'}
+                </>
+              ) : (
+                <>
+                  <Sparkles size={20} />
+                  {isLogin ? 'Prijavi se' : 'Registruj se'}
+                </>
+              )}
             </button>
 
             {/* Additional Options */}
