@@ -1,29 +1,96 @@
 # Veloura API
 
-Express backend API sa SQLite bazom podataka za Veloura aplikaciju.
+Express backend API sa SQLite bazom podataka za Veloura aplikaciju - platformu za povezivanje klijenata i salona lepote.
 
-## Instalacija
+## 🚀 O projektu
 
-```bash
-cd api
-npm install
+Veloura je platforma koja omogućava klijentima da pronađu i rezervišu termine u salonima lepote, a salonima da upravljaju svojim poslovanjem. API pruža potpunu funkcionalnost za autentifikaciju, upravljanje salonima, uslugama, terminima i ocenama.
+
+## 🛠️ Tehnologije
+
+- **Backend**: Node.js, Express.js
+- **Baza podataka**: SQLite
+- **Autentifikacija**: JWT (JSON Web Tokens)
+- **Hashiranje**: bcrypt
+- **CORS**: Cross-Origin Resource Sharing
+- **Testiranje**: Jest
+- **Deployment**: GitHub Actions
+
+## 📁 Struktura projekta
+
+```
+veloura-backend/
+├── api/                    # API backend
+│   ├── middleware/         # Express middleware
+│   ├── models/            # Database models
+│   ├── routes/            # API routes
+│   ├── tests/             # Test files
+│   ├── db.js              # Database initialization
+│   ├── mailer.js          # Email functionality
+│   └── server.js          # Main server file
+├── project/               # Frontend React application
+│   ├── src/               # React source code
+│   ├── components/        # React components
+│   ├── contexts/          # React contexts
+│   ├── services/          # API services
+│   └── tests/             # Frontend tests
+├── scripts/               # PowerShell scripts
+├── .github/               # GitHub Actions workflows
+├── backups/               # Database backups
+└── logs/                  # Application logs
 ```
 
-## Pokretanje
+## ⚡ Brzo pokretanje
 
-### Development mod
+### Preduslovi
+- Node.js (v14 ili noviji)
+- npm ili yarn
+
+### Instalacija
+
+```bash
+# Kloniranje repozitorija
+git clone https://github.com/lakinovisad/veloura-backend.git
+cd veloura-backend
+
+# Instalacija dependencija
+npm install
+
+# Kopiranje environment fajla
+cp env.example .env
+```
+
+### Pokretanje
+
+#### Development mod
 ```bash
 npm run dev
 ```
 
-### Production mod
+#### Production mod
 ```bash
 npm start
 ```
 
 Server će biti dostupan na `http://localhost:3001`
 
-## Endpoints
+## 🔧 Konfiguracija
+
+### Environment varijable
+
+Kreirajte `.env` fajl u root direktorijumu:
+
+```env
+PORT=3001
+JWT_SECRET=your-super-secret-jwt-key
+NODE_ENV=development
+```
+
+### Baza podataka
+
+SQLite baza `veloura.db` se automatski kreira pri prvom pokretanju aplikacije.
+
+## 📚 API Dokumentacija
 
 ### Autentifikacija
 
@@ -250,43 +317,22 @@ Health check endpoint.
 }
 ```
 
-## Baza podataka
+## 🧪 Testiranje
 
-SQLite baza `veloura.db` se automatski kreira pri prvom pokretanju aplikacije.
+### Pokretanje testova
 
-### Tabela Users
-- `id` (TEXT, PRIMARY KEY) - UUID
-- `name` (TEXT, NOT NULL) - Ime korisnika
-- `email` (TEXT, UNIQUE, NOT NULL) - Email adresa
-- `password` (TEXT, NOT NULL) - Hash-ovana lozinka
-- `role` (TEXT, NOT NULL) - 'klijent' ili 'salon'
-- `phone` (TEXT) - Broj telefona
-- `created_at` (DATETIME) - Datum kreiranja
+```bash
+# Pokretanje svih testova
+npm test
 
-### Tabela Salons
-- `id` (TEXT, PRIMARY KEY) - UUID
-- `user_id` (TEXT, NOT NULL) - Foreign key na Users.id
-- `naziv` (TEXT, NOT NULL) - Naziv salona
-- `lokacija` (TEXT, NOT NULL) - Lokacija salona
-- `opis` (TEXT) - Opis salona
-- `radno_vreme` (TEXT) - Radno vreme (može biti JSON string)
-- `created_at` (DATETIME) - Datum kreiranja
+# Pokretanje testova sa coverage
+npm run test:coverage
 
-## Sigurnost
+# Pokretanje specifičnih testova
+npm test -- --testNamePattern="auth"
+```
 
-- Lozinke se hash-uju pomoću bcrypt
-- JWT tokeni za autentifikaciju
-- CORS omogućen za frontend komunikaciju
-- Validacija input-a na svim endpoint-ima
-
-## Environment varijable
-
-- `PORT` - Port na kojem će server raditi (default: 3001)
-- `JWT_SECRET` - Secret key za JWT (default: 'veloura-secret-key-2024')
-
-## Testiranje
-
-Možete testirati API pomoću Postman-a ili curl komandi:
+### Testiranje sa curl
 
 ```bash
 # Registracija
@@ -317,4 +363,88 @@ curl -X POST http://localhost:3001/api/salons \
 
 # Dohvatanje svih salona
 curl -X GET http://localhost:3001/api/salons
-``` 
+```
+
+## 🚀 Deployment
+
+### Lokalni deployment
+
+```bash
+# Build aplikacije
+npm run build
+
+# Pokretanje u production modu
+npm start
+```
+
+### Server deployment
+
+Projekat uključuje PowerShell skripte za lakše upravljanje serverom:
+
+```powershell
+# Pokretanje servera
+.\start-server.ps1
+
+# Zaustavljanje servera
+.\stop-server.ps1
+
+# Restart servera
+.\restart-server.ps1
+
+# Backup baze podataka
+.\backup.ps1
+```
+
+### GitHub Actions
+
+Projekat koristi GitHub Actions za:
+- Automatsko testiranje na push/PR
+- Deployment na server
+- Backup baze podataka
+
+## 🔒 Sigurnost
+
+- **Lozinke**: Hash-ovane pomoću bcrypt
+- **Autentifikacija**: JWT tokeni
+- **CORS**: Omogućen za frontend komunikaciju
+- **Validacija**: Input validacija na svim endpoint-ima
+- **Rate limiting**: Zaštita od DDoS napada
+- **SQL Injection**: Sprečeno kroz parametrizovane upite
+
+## 🤝 Doprinosi
+
+Dobrodošli su svi doprinosi! Molimo vas da:
+
+1. Fork repozitorija
+2. Kreirajte feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit vaših izmena (`git commit -m 'Add amazing feature'`)
+4. Push na branch (`git push origin feature/amazing-feature`)
+5. Otvorite Pull Request
+
+### Guidelines za kod
+
+- Koristite emoji u console.log porukama za bolju čitljivost 🚀
+- Pratite ESLint pravila
+- Pišite testove za nove funkcionalnosti
+- Dokumentujte API promene
+
+## 📝 License
+
+Ovaj projekat je licenciran pod MIT licencom - pogledajte [LICENSE](LICENSE) fajl za detalje.
+
+## 📞 Kontakt
+
+- **Autor**: Veloura Team
+- **Email**: support@veloura.com
+- **GitHub**: [@lakinovisad](https://github.com/lakinovisad)
+
+## 🙏 Zahvalnice
+
+- Express.js tim za odličan framework
+- SQLite tim za jednostavnu i efikasnu bazu podataka
+- React tim za frontend framework
+- Svi kontributori koji su doprineli projektu
+
+---
+
+⭐ Ako vam se sviđa ovaj projekat, molimo vas da ga označite zvezdicom na GitHub-u! 
