@@ -1,6 +1,9 @@
+require('dotenv').config();
+
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { authenticateToken } = require('../middleware/auth');
 
 console.log("✅ auth.js fajl je učitan");
 
@@ -205,6 +208,23 @@ router.get('/profile', async (req, res) => {
 // GET /test - test ruta za proveru dostupnosti
 router.get('/test', (req, res) => {
   res.json({ message: 'Rute iz auth.js su dostupne.' });
+});
+
+// GET /me - vrati podatke o trenutno prijavljenom korisniku
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'Korisnik nije pronađen' });
+    }
+
+    const { password: _, ...safeUser } = user; // Ukloni lozinku
+    res.status(200).json({ user: safeUser });
+
+  } catch (err) {
+    console.error('Greška pri dohvatanju korisnika:', err);
+    res.status(500).json({ error: 'Greška na serveru' });
+  }
 });
 
 module.exports = router; 

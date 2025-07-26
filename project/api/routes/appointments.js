@@ -98,4 +98,47 @@ router.get('/test', (req, res) => {
   res.json({ message: 'Rute iz appointments.js su dostupne.' });
 });
 
+// PATCH /api/appointments/:id/status - promeni status termina (samo salon ili admin)
+router.patch('/:id/status', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const dozvoljeniStatusi = ['zakazano', 'završen', 'otkazan'];
+  if (!dozvoljeniStatusi.includes(status)) {
+    return res.status(400).json({ error: 'Neispravan status' });
+  }
+
+  try {
+    // Provera da li korisnik ima pravo (admin ili salon koji je vlasnik termina)
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ error: 'Termin nije pronađen' });
+    }
+
+    if (req.user.role !== 'admin' && req.user.id !== appointment.user_id) {
+      return res.status(403).json({ error: 'Nemate dozvolu da menjate ovaj termin' });
+    }
+
+    await Appointment.updateStatus(id, status);
+    res.status(200).json({ message: 'Status uspešno ažuriran' });
+
+  } catch (err) {
+    console.error('Greška pri promeni statusa termina:', err);
+    res.status(500).json({ error: 'Greška na serveru' });
+  }
+});
+
+// GET /api/appointments/salon/:salon_id - svi termini za salon
+router.get('/salon/:salon_id', authenticateToken, async (req, res) => {
+  const { salon_id } = req.params;
+
+  try {
+    const appointments = await Appointment.findBySalonId(salon_id);
+    res.status(200).json({ success: true, data: appointments });
+  } catch (err) {
+    console.error('Greška pri dohvaćanju termina za salon:', err);
+    res.status(500).json({ success: false, error: 'Greška na serveru' });
+  }
+});
+
 module.exports = router; 

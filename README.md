@@ -1,135 +1,108 @@
-# Veloura API
+# 💇‍♀️ Veloura Backend API
 
-Express backend API sa SQLite bazom podataka za Veloura aplikaciju - platformu za povezivanje klijenata i salona lepote.
+Node.js + Express + SQLite backend za aplikaciju za salone, korisnike i zakazivanje termina.
 
-## 🚀 O projektu
+## 📦 O projektu
 
-Veloura je platforma koja omogućava klijentima da pronađu i rezervišu termine u salonima lepote, a salonima da upravljaju svojim poslovanjem. API pruža potpunu funkcionalnost za autentifikaciju, upravljanje salonima, uslugama, terminima i ocenama.
+Veloura API je RESTful backend servis koji omogućava:
+- 🔐 **Autentifikaciju korisnika** (klijenti i saloni)
+- 🏢 **Upravljanje salonima** (CRUD operacije)
+- 💇‍♀️ **Upravljanje uslugama** (tretmani, cene)
+- 📅 **Rezervacije termina** (appointments)
+- ⭐ **Sistem ocena** (reviews)
+- 🔒 **JWT autentifikacija** sa role-based pristupom
 
-## 🛠️ Tehnologije
+### 🛠️ Tehnologije
+- **Node.js** + **Express.js**
+- **SQLite** baza podataka
+- **JWT** autentifikacija
+- **bcrypt** hashiranje lozinki
+- **CORS** podrška
+- **express-validator** validacija
 
-- **Backend**: Node.js, Express.js
-- **Baza podataka**: SQLite
-- **Autentifikacija**: JWT (JSON Web Tokens)
-- **Hashiranje**: bcrypt
-- **CORS**: Cross-Origin Resource Sharing
-- **Testiranje**: Jest
-- **Deployment**: GitHub Actions
+## 🚀 Pokretanje projekta
 
-## 📁 Struktura projekta
-
-```
-veloura-backend/
-├── api/                    # API backend
-│   ├── middleware/         # Express middleware
-│   ├── models/            # Database models
-│   ├── routes/            # API routes
-│   ├── tests/             # Test files
-│   ├── db.js              # Database initialization
-│   ├── mailer.js          # Email functionality
-│   └── server.js          # Main server file
-├── project/               # Frontend React application
-│   ├── src/               # React source code
-│   ├── components/        # React components
-│   ├── contexts/          # React contexts
-│   ├── services/          # API services
-│   └── tests/             # Frontend tests
-├── scripts/               # PowerShell scripts
-├── .github/               # GitHub Actions workflows
-├── backups/               # Database backups
-└── logs/                  # Application logs
-```
-
-## ⚡ Brzo pokretanje
-
-### Preduslovi
-- Node.js (v14 ili noviji)
-- npm ili yarn
-
-### Instalacija
+1. Instalacija zavisnosti:
 
 ```bash
-# Kloniranje repozitorija
-git clone https://github.com/lakinovisad/veloura-backend.git
-cd veloura-backend
-
-# Instalacija dependencija
 npm install
-
-# Kopiranje environment fajla
-cp env.example .env
 ```
 
-### Pokretanje
+2. Pokretanje servera:
 
-#### Development mod
 ```bash
+# Development mod
 npm run dev
-```
 
-#### Production mod
-```bash
+# Ili direktno
+node server.js
+
+# Production mod
 npm start
 ```
 
-Server će biti dostupan na `http://localhost:3001`
+3. Pristup aplikaciji:
 
-## 🔧 Konfiguracija
+- **API Base URL:** `http://localhost:3001` (ili sledeći slobodan port)
+- **Health Check:** `http://localhost:3001/api/health`
+- **API Dokumentacija:** `http://localhost:3001/`
 
-### Environment varijable
+---
 
-Kreirajte `.env` fajl u root direktorijumu:
+## 📊 Baza podataka
 
-```env
-PORT=3001
-JWT_SECRET=your-super-secret-jwt-key
-NODE_ENV=development
+### 🗄️ Struktura
+API koristi **SQLite** bazu podataka sa sledećim tabelama:
+
+| Tabela | Opis |
+|--------|------|
+| `Users` | Korisnici (klijenti i saloni) |
+| `Salons` | Informacije o salonima |
+| `Services` | Usluge/tretmani |
+| `Appointments` | Rezervacije termina |
+| `Reviews` | Ocene i komentari |
+
+### 🔄 Automatska inicijalizacija
+Baza se automatski kreira pri pokretanju servera:
+```bash
+🗄️ Inicijalizujem bazu podataka...
+✅ Baza podataka uspešno inicijalizovana
 ```
 
-### Baza podataka
+## 🔐 Autentifikacija
 
-SQLite baza `veloura.db` se automatski kreira pri prvom pokretanju aplikacije.
+### 👥 Tipovi korisnika
+- **`klijent`** - Korisnici koji rezervišu termine
+- **`salon`** - Vlasnici salona koji upravljaju uslugama
 
-## 📚 API Dokumentacija
+### 🔑 JWT Token
+Svi zaštićeni endpointi zahtevaju JWT token u header-u:
+```
+Authorization: Bearer <jwt_token>
+```
 
-### Autentifikacija
+### ⏰ Token validnost
+- **Trajanje:** 7 dana
+- **Format:** JWT sa user ID i role informacijama
 
-#### POST /api/auth/register
-Registruje novog korisnika.
+## 📡 API rute
 
-**Body:**
+### 🔐 Autentifikacija (`/api/auth`)
+
+#### `POST /api/auth/register`
+Registruje novog korisnika
 ```json
 {
   "name": "Ime Prezime",
-  "email": "ime@example.com",
+  "email": "ime@example.com", 
   "password": "lozinka123",
   "role": "klijent",
   "phone": "+381601234567"
 }
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Korisnik uspešno registrovan",
-  "data": {
-    "user": {
-      "id": "uuid",
-      "name": "Ime Prezime",
-      "email": "ime@example.com",
-      "role": "klijent",
-      "phone": "+381601234567"
-    },
-    "token": "jwt_token"
-  }
-}
-```
-
-#### POST /api/auth/login
-Prijavljuje korisnika.
-
-**Body:**
+#### `POST /api/auth/login`
+Prijavljuje korisnika
 ```json
 {
   "email": "ime@example.com",
@@ -137,314 +110,143 @@ Prijavljuje korisnika.
 }
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Uspešna prijava",
-  "data": {
-    "user": {
-      "id": "uuid",
-      "name": "Ime Prezime",
-      "email": "ime@example.com",
-      "role": "klijent",
-      "phone": "+381601234567"
-    },
-    "token": "jwt_token"
-  }
-}
-```
+#### `GET /api/auth/me`
+Dohvata profil trenutnog korisnika *(zaštićen)*
 
-#### GET /api/auth/profile
-Dohvata profil trenutnog korisnika (zahtevan JWT token).
+#### `GET /api/auth/profile`
+Alternativni endpoint za profil *(zaštićen)*
 
-**Headers:**
-```
-Authorization: Bearer jwt_token
-```
+#### `GET /api/auth/test`
+Test endpoint za proveru dostupnosti
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "id": "uuid",
-      "name": "Ime Prezime",
-      "email": "ime@example.com",
-      "role": "klijent",
-      "phone": "+381601234567",
-      "created_at": "2024-01-01T00:00:00.000Z"
-    }
-  }
-}
-```
+### 🏢 Saloni (`/api/salons`)
 
-### Saloni
+#### `GET /api/salons`
+Dohvata sve salone
 
-#### POST /api/salons
-Kreira novi salon (samo za korisnike sa role: "salon").
+#### `GET /api/salons/:id`
+Dohvata salon po ID-u
 
-**Headers:**
-```
-Authorization: Bearer jwt_token
-```
+#### `POST /api/salons`
+Kreira novi salon *(zaštićen, role: salon)*
 
-**Body:**
-```json
-{
-  "naziv": "Salon Lepote",
-  "lokacija": "Beograd, Knez Mihailova 15",
-  "opis": "Profesionalni salon za sve vrste tretmana",
-  "radno_vreme": "Pon-Pet: 9-18h, Sub: 9-15h"
-}
-```
+#### `PUT /api/salons/:id`
+Ažurira salon *(zaštićen, vlasnik)*
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Salon uspešno kreiran",
-  "data": {
-    "salon": {
-      "id": "uuid",
-      "user_id": "user_uuid",
-      "naziv": "Salon Lepote",
-      "lokacija": "Beograd, Knez Mihailova 15",
-      "opis": "Profesionalni salon za sve vrste tretmana",
-      "radno_vreme": "Pon-Pet: 9-18h, Sub: 9-15h"
-    }
-  }
-}
-```
+#### `DELETE /api/salons/:id`
+Briše salon *(zaštićen, vlasnik)*
 
-#### GET /api/salons
-Dohvata sve salone.
+#### `GET /api/salons/my/salon`
+Dohvata salon trenutnog korisnika *(zaštićen, role: salon)*
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "salons": [
-      {
-        "id": "uuid",
-        "user_id": "user_uuid",
-        "naziv": "Salon Lepote",
-        "lokacija": "Beograd, Knez Mihailova 15",
-        "opis": "Profesionalni salon za sve vrste tretmana",
-        "radno_vreme": "Pon-Pet: 9-18h, Sub: 9-15h",
-        "created_at": "2024-01-01T00:00:00.000Z",
-        "user_name": "Ime Prezime",
-        "user_email": "ime@example.com",
-        "user_phone": "+381601234567"
-      }
-    ],
-    "count": 1
-  }
-}
-```
+### 💇‍♀️ Usluge (`/api/services`)
 
-#### GET /api/salons/:id
-Dohvata salon po ID-u.
+#### `GET /api/services`
+Dohvata sve usluge
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "salon": {
-      "id": "uuid",
-      "user_id": "user_uuid",
-      "naziv": "Salon Lepote",
-      "lokacija": "Beograd, Knez Mihailova 15",
-      "opis": "Profesionalni salon za sve vrste tretmana",
-      "radno_vreme": "Pon-Pet: 9-18h, Sub: 9-15h",
-      "created_at": "2024-01-01T00:00:00.000Z",
-      "user_name": "Ime Prezime",
-      "user_email": "ime@example.com",
-      "user_phone": "+381601234567"
-    }
-  }
-}
-```
+#### `GET /api/services/salon/:salon_id`
+Dohvata usluge za određeni salon
 
-#### PUT /api/salons/:id
-Ažurira salon (samo vlasnik salona).
+#### `POST /api/services`
+Kreira novu uslugu *(zaštićen, role: salon)*
 
-**Headers:**
-```
-Authorization: Bearer jwt_token
-```
+#### `PUT /api/services/:id`
+Ažurira uslugu *(zaštićen, vlasnik)*
 
-**Body:**
-```json
-{
-  "naziv": "Novi Naziv Salona",
-  "lokacija": "Beograd, Novi Sad 20",
-  "opis": "Ažuriran opis salona",
-  "radno_vreme": "Pon-Sub: 8-20h"
-}
-```
+#### `DELETE /api/services/:id`
+Briše uslugu *(zaštićen, vlasnik)*
 
-#### DELETE /api/salons/:id
-Briše salon (samo vlasnik salona).
+### 📅 Termini (`/api/appointments`)
 
-**Headers:**
-```
-Authorization: Bearer jwt_token
-```
+#### `GET /api/appointments`
+Dohvata sve termine *(zaštićen)*
 
-#### GET /api/salons/my/salon
-Dohvata salon trenutnog korisnika (samo za role: "salon").
+#### `GET /api/appointments/salon/:salon_id`
+Dohvata termine za salon *(zaštićen)*
 
-**Headers:**
-```
-Authorization: Bearer jwt_token
-```
+#### `POST /api/appointments`
+Kreira novi termin *(zaštićen)*
 
-### Ostali endpoints
+#### `PATCH /api/appointments/:id/status`
+Ažurira status termina *(zaštićen, admin/vlasnik)*
 
-#### GET /api/health
-Health check endpoint.
+#### `DELETE /api/appointments/:id`
+Briše termin *(zaštićen, vlasnik)*
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Veloura API je aktivan",
-  "timestamp": "2024-01-01T00:00:00.000Z"
-}
-```
+### ⭐ Ocene (`/api/reviews`)
 
-## 🧪 Testiranje
+#### `GET /api/reviews`
+Dohvata sve ocene
 
-### Pokretanje testova
+#### `GET /api/reviews/salon/:salon_id`
+Dohvata ocene za salon
 
+#### `POST /api/reviews`
+Kreira novu ocenu *(zaštićen)*
+
+#### `PUT /api/reviews/:id`
+Ažurira ocenu *(zaštićen, autor)*
+
+#### `DELETE /api/reviews/:id`
+Briše ocenu *(zaštićen, autor)*
+
+## 🔄 Seed skripta
+
+### 🌱 Pokretanje seed-a
 ```bash
-# Pokretanje svih testova
-npm test
-
-# Pokretanje testova sa coverage
-npm run test:coverage
-
-# Pokretanje specifičnih testova
-npm test -- --testNamePattern="auth"
+# Pokreni seed skriptu za test podatke
+node seed.js
 ```
 
-### Testiranje sa curl
+### 📋 Seed podaci
+Skripta kreira:
+- **2 test korisnika** (admin i client)
+- **1 test salon**
+- **3 test usluge**
+- **2 test termina**
+- **1 test ocenu**
 
+### 🔑 Test kredencijali
 ```bash
-# Registracija
-curl -X POST http://localhost:3001/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Test User","email":"test@example.com","password":"password123","role":"klijent"}'
+# Admin korisnik
+Email: admin@veloura.com
+Password: admin123
+Role: salon
 
-# Prijava
-curl -X POST http://localhost:3001/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password123"}'
-
-# Registracija salona
-curl -X POST http://localhost:3001/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Salon Owner","email":"salon@example.com","password":"password123","role":"salon"}'
-
-# Prijava salona
-curl -X POST http://localhost:3001/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"salon@example.com","password":"password123"}'
-
-# Kreiranje salona (koristite token iz prijave)
-curl -X POST http://localhost:3001/api/salons \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{"naziv":"Salon Lepote","lokacija":"Beograd, Knez Mihailova 15","opis":"Profesionalni salon","radno_vreme":"Pon-Pet: 9-18h"}'
-
-# Dohvatanje svih salona
-curl -X GET http://localhost:3001/api/salons
+# Client korisnik  
+Email: client@veloura.com
+Password: client123
+Role: klijent
 ```
 
-## 🚀 Deployment
+## ⚠️ Napomene
 
-### Lokalni deployment
+### 🔒 Sigurnost
+- Lozinke se hashiraju sa bcrypt
+- JWT tokeni imaju 7-dnevnu validnost
+- CORS je konfigurisan za sve domene (`*`)
+- Role-based pristup za sve endpoint-e
 
-```bash
-# Build aplikacije
-npm run build
+### 🚨 Važno
+- Server automatski pronalazi slobodan port (3001-3010)
+- Baza se automatski kreira pri pokretanju
+- Sve rute su validirane sa express-validator
+- Error handling je implementiran za sve endpoint-e
 
-# Pokretanje u production modu
-npm start
-```
+### 🔧 Development
+- Koristi `nodemon` za development
+- Logovi su detaljni sa emoji indikatorima
+- CORS je omogućen za frontend integraciju
 
-### Server deployment
-
-Projekat uključuje PowerShell skripte za lakše upravljanje serverom:
-
-```powershell
-# Pokretanje servera
-.\start-server.ps1
-
-# Zaustavljanje servera
-.\stop-server.ps1
-
-# Restart servera
-.\restart-server.ps1
-
-# Backup baze podataka
-.\backup.ps1
-```
-
-### GitHub Actions
-
-Projekat koristi GitHub Actions za:
-- Automatsko testiranje na push/PR
-- Deployment na server
-- Backup baze podataka
-
-## 🔒 Sigurnost
-
-- **Lozinke**: Hash-ovane pomoću bcrypt
-- **Autentifikacija**: JWT tokeni
-- **CORS**: Omogućen za frontend komunikaciju
-- **Validacija**: Input validacija na svim endpoint-ima
-- **Rate limiting**: Zaštita od DDoS napada
-- **SQL Injection**: Sprečeno kroz parametrizovane upite
-
-## 🤝 Doprinosi
-
-Dobrodošli su svi doprinosi! Molimo vas da:
-
-1. Fork repozitorija
-2. Kreirajte feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit vaših izmena (`git commit -m 'Add amazing feature'`)
-4. Push na branch (`git push origin feature/amazing-feature`)
-5. Otvorite Pull Request
-
-### Guidelines za kod
-
-- Koristite emoji u console.log porukama za bolju čitljivost 🚀
-- Pratite ESLint pravila
-- Pišite testove za nove funkcionalnosti
-- Dokumentujte API promene
-
-## 📝 License
-
-Ovaj projekat je licenciran pod MIT licencom - pogledajte [LICENSE](LICENSE) fajl za detalje.
-
-## 📞 Kontakt
-
-- **Autor**: Veloura Team
-- **Email**: support@veloura.com
-- **GitHub**: [@lakinovisad](https://github.com/lakinovisad)
-
-## 🙏 Zahvalnice
-
-- Express.js tim za odličan framework
-- SQLite tim za jednostavnu i efikasnu bazu podataka
-- React tim za frontend framework
-- Svi kontributori koji su doprineli projektu
+### 📝 Status kodovi
+- `200` - Uspešan zahtev
+- `201` - Kreiran resurs
+- `400` - Greška validacije
+- `401` - Neautorizovan pristup
+- `404` - Resurs nije pronađen
+- `409` - Konflikt (npr. email već postoji)
+- `500` - Greška servera
 
 ---
 
-⭐ Ako vam se sviđa ovaj projekat, molimo vas da ga označite zvezdicom na GitHub-u! 
+**🎯 API je spreman za produkciju i frontend integraciju!** 
