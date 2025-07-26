@@ -1,0 +1,14 @@
+🗄️ Inicijalizujem bazu podataka...
+Tabela Users uspešno kreirana ili već postoji
+Tabela Salons uspešno kreirana ili već postoji
+Tabela Services uspešno kreirana ili već postoji
+Tabela Appointments uspešno kreirana ili već postoji
+Tabela Reviews uspešno kreirana ili već postoji
+✅ Baza podataka uspešno inicijalizovana
+🔍 Pokušavam da pokrenem server na portu 3001...
+⚠️ Port 3001 je zauzet, pokušavam sledeći...
+🔍 Pokušavam da pokrenem server na portu 3002...
+🚀 Veloura API server pokrenut na portu 3002
+📡 API dostupan na: http://localhost:3002
+🔐 Auth endpoint: http://localhost:3002/api/auth
+✅ Server uspešno pokrenut na portu 3002!

@@ -1,68 +1,108 @@
-# Veloura API
+# 💇‍♀️ Veloura Backend API
 
-Express backend API sa SQLite bazom podataka za Veloura aplikaciju.
+Node.js + Express + SQLite backend za aplikaciju za salone, korisnike i zakazivanje termina.
 
-## Instalacija
+## 📦 O projektu
+
+Veloura API je RESTful backend servis koji omogućava:
+- 🔐 **Autentifikaciju korisnika** (klijenti i saloni)
+- 🏢 **Upravljanje salonima** (CRUD operacije)
+- 💇‍♀️ **Upravljanje uslugama** (tretmani, cene)
+- 📅 **Rezervacije termina** (appointments)
+- ⭐ **Sistem ocena** (reviews)
+- 🔒 **JWT autentifikacija** sa role-based pristupom
+
+### 🛠️ Tehnologije
+- **Node.js** + **Express.js**
+- **SQLite** baza podataka
+- **JWT** autentifikacija
+- **bcrypt** hashiranje lozinki
+- **CORS** podrška
+- **express-validator** validacija
+
+## 🚀 Pokretanje projekta
+
+1. Instalacija zavisnosti:
 
 ```bash
-cd api
 npm install
 ```
 
-## Pokretanje
+2. Pokretanje servera:
 
-### Development mod
 ```bash
+# Development mod
 npm run dev
-```
 
-### Production mod
-```bash
+# Ili direktno
+node server.js
+
+# Production mod
 npm start
 ```
 
-Server će biti dostupan na `http://localhost:3001`
+3. Pristup aplikaciji:
 
-## Endpoints
+- **API Base URL:** `http://localhost:3001` (ili sledeći slobodan port)
+- **Health Check:** `http://localhost:3001/api/health`
+- **API Dokumentacija:** `http://localhost:3001/`
 
-### Autentifikacija
+---
 
-#### POST /api/auth/register
-Registruje novog korisnika.
+## 📊 Baza podataka
 
-**Body:**
+### 🗄️ Struktura
+API koristi **SQLite** bazu podataka sa sledećim tabelama:
+
+| Tabela | Opis |
+|--------|------|
+| `Users` | Korisnici (klijenti i saloni) |
+| `Salons` | Informacije o salonima |
+| `Services` | Usluge/tretmani |
+| `Appointments` | Rezervacije termina |
+| `Reviews` | Ocene i komentari |
+
+### 🔄 Automatska inicijalizacija
+Baza se automatski kreira pri pokretanju servera:
+```bash
+🗄️ Inicijalizujem bazu podataka...
+✅ Baza podataka uspešno inicijalizovana
+```
+
+## 🔐 Autentifikacija
+
+### 👥 Tipovi korisnika
+- **`klijent`** - Korisnici koji rezervišu termine
+- **`salon`** - Vlasnici salona koji upravljaju uslugama
+
+### 🔑 JWT Token
+Svi zaštićeni endpointi zahtevaju JWT token u header-u:
+```
+Authorization: Bearer <jwt_token>
+```
+
+### ⏰ Token validnost
+- **Trajanje:** 7 dana
+- **Format:** JWT sa user ID i role informacijama
+
+## 📡 API rute
+
+### 🔐 Autentifikacija (`/api/auth`)
+
+#### `POST /api/auth/register`
+Registruje novog korisnika
 ```json
 {
   "name": "Ime Prezime",
-  "email": "ime@example.com",
+  "email": "ime@example.com", 
   "password": "lozinka123",
   "role": "klijent",
   "phone": "+381601234567"
 }
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Korisnik uspešno registrovan",
-  "data": {
-    "user": {
-      "id": "uuid",
-      "name": "Ime Prezime",
-      "email": "ime@example.com",
-      "role": "klijent",
-      "phone": "+381601234567"
-    },
-    "token": "jwt_token"
-  }
-}
-```
-
-#### POST /api/auth/login
-Prijavljuje korisnika.
-
-**Body:**
+#### `POST /api/auth/login`
+Prijavljuje korisnika
 ```json
 {
   "email": "ime@example.com",
@@ -70,251 +110,143 @@ Prijavljuje korisnika.
 }
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Uspešna prijava",
-  "data": {
-    "user": {
-      "id": "uuid",
-      "name": "Ime Prezime",
-      "email": "ime@example.com",
-      "role": "klijent",
-      "phone": "+381601234567"
-    },
-    "token": "jwt_token"
-  }
-}
-```
+#### `GET /api/auth/me`
+Dohvata profil trenutnog korisnika *(zaštićen)*
 
-#### GET /api/auth/profile
-Dohvata profil trenutnog korisnika (zahtevan JWT token).
+#### `GET /api/auth/profile`
+Alternativni endpoint za profil *(zaštićen)*
 
-**Headers:**
-```
-Authorization: Bearer jwt_token
-```
+#### `GET /api/auth/test`
+Test endpoint za proveru dostupnosti
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "id": "uuid",
-      "name": "Ime Prezime",
-      "email": "ime@example.com",
-      "role": "klijent",
-      "phone": "+381601234567",
-      "created_at": "2024-01-01T00:00:00.000Z"
-    }
-  }
-}
-```
+### 🏢 Saloni (`/api/salons`)
 
-### Saloni
+#### `GET /api/salons`
+Dohvata sve salone
 
-#### POST /api/salons
-Kreira novi salon (samo za korisnike sa role: "salon").
+#### `GET /api/salons/:id`
+Dohvata salon po ID-u
 
-**Headers:**
-```
-Authorization: Bearer jwt_token
-```
+#### `POST /api/salons`
+Kreira novi salon *(zaštićen, role: salon)*
 
-**Body:**
-```json
-{
-  "naziv": "Salon Lepote",
-  "lokacija": "Beograd, Knez Mihailova 15",
-  "opis": "Profesionalni salon za sve vrste tretmana",
-  "radno_vreme": "Pon-Pet: 9-18h, Sub: 9-15h"
-}
-```
+#### `PUT /api/salons/:id`
+Ažurira salon *(zaštićen, vlasnik)*
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Salon uspešno kreiran",
-  "data": {
-    "salon": {
-      "id": "uuid",
-      "user_id": "user_uuid",
-      "naziv": "Salon Lepote",
-      "lokacija": "Beograd, Knez Mihailova 15",
-      "opis": "Profesionalni salon za sve vrste tretmana",
-      "radno_vreme": "Pon-Pet: 9-18h, Sub: 9-15h"
-    }
-  }
-}
-```
+#### `DELETE /api/salons/:id`
+Briše salon *(zaštićen, vlasnik)*
 
-#### GET /api/salons
-Dohvata sve salone.
+#### `GET /api/salons/my/salon`
+Dohvata salon trenutnog korisnika *(zaštićen, role: salon)*
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "salons": [
-      {
-        "id": "uuid",
-        "user_id": "user_uuid",
-        "naziv": "Salon Lepote",
-        "lokacija": "Beograd, Knez Mihailova 15",
-        "opis": "Profesionalni salon za sve vrste tretmana",
-        "radno_vreme": "Pon-Pet: 9-18h, Sub: 9-15h",
-        "created_at": "2024-01-01T00:00:00.000Z",
-        "user_name": "Ime Prezime",
-        "user_email": "ime@example.com",
-        "user_phone": "+381601234567"
-      }
-    ],
-    "count": 1
-  }
-}
-```
+### 💇‍♀️ Usluge (`/api/services`)
 
-#### GET /api/salons/:id
-Dohvata salon po ID-u.
+#### `GET /api/services`
+Dohvata sve usluge
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "salon": {
-      "id": "uuid",
-      "user_id": "user_uuid",
-      "naziv": "Salon Lepote",
-      "lokacija": "Beograd, Knez Mihailova 15",
-      "opis": "Profesionalni salon za sve vrste tretmana",
-      "radno_vreme": "Pon-Pet: 9-18h, Sub: 9-15h",
-      "created_at": "2024-01-01T00:00:00.000Z",
-      "user_name": "Ime Prezime",
-      "user_email": "ime@example.com",
-      "user_phone": "+381601234567"
-    }
-  }
-}
-```
+#### `GET /api/services/salon/:salon_id`
+Dohvata usluge za određeni salon
 
-#### PUT /api/salons/:id
-Ažurira salon (samo vlasnik salona).
+#### `POST /api/services`
+Kreira novu uslugu *(zaštićen, role: salon)*
 
-**Headers:**
-```
-Authorization: Bearer jwt_token
-```
+#### `PUT /api/services/:id`
+Ažurira uslugu *(zaštićen, vlasnik)*
 
-**Body:**
-```json
-{
-  "naziv": "Novi Naziv Salona",
-  "lokacija": "Beograd, Novi Sad 20",
-  "opis": "Ažuriran opis salona",
-  "radno_vreme": "Pon-Sub: 8-20h"
-}
-```
+#### `DELETE /api/services/:id`
+Briše uslugu *(zaštićen, vlasnik)*
 
-#### DELETE /api/salons/:id
-Briše salon (samo vlasnik salona).
+### 📅 Termini (`/api/appointments`)
 
-**Headers:**
-```
-Authorization: Bearer jwt_token
-```
+#### `GET /api/appointments`
+Dohvata sve termine *(zaštićen)*
 
-#### GET /api/salons/my/salon
-Dohvata salon trenutnog korisnika (samo za role: "salon").
+#### `GET /api/appointments/salon/:salon_id`
+Dohvata termine za salon *(zaštićen)*
 
-**Headers:**
-```
-Authorization: Bearer jwt_token
-```
+#### `POST /api/appointments`
+Kreira novi termin *(zaštićen)*
 
-### Ostali endpoints
+#### `PATCH /api/appointments/:id/status`
+Ažurira status termina *(zaštićen, admin/vlasnik)*
 
-#### GET /api/health
-Health check endpoint.
+#### `DELETE /api/appointments/:id`
+Briše termin *(zaštićen, vlasnik)*
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Veloura API je aktivan",
-  "timestamp": "2024-01-01T00:00:00.000Z"
-}
-```
+### ⭐ Ocene (`/api/reviews`)
 
-## Baza podataka
+#### `GET /api/reviews`
+Dohvata sve ocene
 
-SQLite baza `veloura.db` se automatski kreira pri prvom pokretanju aplikacije.
+#### `GET /api/reviews/salon/:salon_id`
+Dohvata ocene za salon
 
-### Tabela Users
-- `id` (TEXT, PRIMARY KEY) - UUID
-- `name` (TEXT, NOT NULL) - Ime korisnika
-- `email` (TEXT, UNIQUE, NOT NULL) - Email adresa
-- `password` (TEXT, NOT NULL) - Hash-ovana lozinka
-- `role` (TEXT, NOT NULL) - 'klijent' ili 'salon'
-- `phone` (TEXT) - Broj telefona
-- `created_at` (DATETIME) - Datum kreiranja
+#### `POST /api/reviews`
+Kreira novu ocenu *(zaštićen)*
 
-### Tabela Salons
-- `id` (TEXT, PRIMARY KEY) - UUID
-- `user_id` (TEXT, NOT NULL) - Foreign key na Users.id
-- `naziv` (TEXT, NOT NULL) - Naziv salona
-- `lokacija` (TEXT, NOT NULL) - Lokacija salona
-- `opis` (TEXT) - Opis salona
-- `radno_vreme` (TEXT) - Radno vreme (može biti JSON string)
-- `created_at` (DATETIME) - Datum kreiranja
+#### `PUT /api/reviews/:id`
+Ažurira ocenu *(zaštićen, autor)*
 
-## Sigurnost
+#### `DELETE /api/reviews/:id`
+Briše ocenu *(zaštićen, autor)*
 
-- Lozinke se hash-uju pomoću bcrypt
-- JWT tokeni za autentifikaciju
-- CORS omogućen za frontend komunikaciju
-- Validacija input-a na svim endpoint-ima
+## 🔄 Seed skripta
 
-## Environment varijable
-
-- `PORT` - Port na kojem će server raditi (default: 3001)
-- `JWT_SECRET` - Secret key za JWT (default: 'veloura-secret-key-2024')
-
-## Testiranje
-
-Možete testirati API pomoću Postman-a ili curl komandi:
-
+### 🌱 Pokretanje seed-a
 ```bash
-# Registracija
-curl -X POST http://localhost:3001/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Test User","email":"test@example.com","password":"password123","role":"klijent"}'
+# Pokreni seed skriptu za test podatke
+node seed.js
+```
 
-# Prijava
-curl -X POST http://localhost:3001/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password123"}'
+### 📋 Seed podaci
+Skripta kreira:
+- **2 test korisnika** (admin i client)
+- **1 test salon**
+- **3 test usluge**
+- **2 test termina**
+- **1 test ocenu**
 
-# Registracija salona
-curl -X POST http://localhost:3001/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Salon Owner","email":"salon@example.com","password":"password123","role":"salon"}'
+### 🔑 Test kredencijali
+```bash
+# Admin korisnik
+Email: admin@veloura.com
+Password: admin123
+Role: salon
 
-# Prijava salona
-curl -X POST http://localhost:3001/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"salon@example.com","password":"password123"}'
+# Client korisnik  
+Email: client@veloura.com
+Password: client123
+Role: klijent
+```
 
-# Kreiranje salona (koristite token iz prijave)
-curl -X POST http://localhost:3001/api/salons \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{"naziv":"Salon Lepote","lokacija":"Beograd, Knez Mihailova 15","opis":"Profesionalni salon","radno_vreme":"Pon-Pet: 9-18h"}'
+## ⚠️ Napomene
 
-# Dohvatanje svih salona
-curl -X GET http://localhost:3001/api/salons
-``` 
+### 🔒 Sigurnost
+- Lozinke se hashiraju sa bcrypt
+- JWT tokeni imaju 7-dnevnu validnost
+- CORS je konfigurisan za sve domene (`*`)
+- Role-based pristup za sve endpoint-e
+
+### 🚨 Važno
+- Server automatski pronalazi slobodan port (3001-3010)
+- Baza se automatski kreira pri pokretanju
+- Sve rute su validirane sa express-validator
+- Error handling je implementiran za sve endpoint-e
+
+### 🔧 Development
+- Koristi `nodemon` za development
+- Logovi su detaljni sa emoji indikatorima
+- CORS je omogućen za frontend integraciju
+
+### 📝 Status kodovi
+- `200` - Uspešan zahtev
+- `201` - Kreiran resurs
+- `400` - Greška validacije
+- `401` - Neautorizovan pristup
+- `404` - Resurs nije pronađen
+- `409` - Konflikt (npr. email već postoji)
+- `500` - Greška servera
+
+---
+
+**🎯 API je spreman za produkciju i frontend integraciju!** 

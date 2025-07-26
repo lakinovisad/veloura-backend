@@ -68,19 +68,17 @@ app.use('*', (req, res) => {
   });
 });
 
-let serverInstance = null;
-
 // Funkcija za pokretanje servera na određenom portu
 const startServerOnPort = (port) => {
   return new Promise((resolve, reject) => {
-    serverInstance = app.listen(port, () => {
+    const server = app.listen(port, () => {
       console.log(`🚀 Veloura API server pokrenut na portu ${port}`);
       console.log(`📡 API dostupan na: http://localhost:${port}`);
       console.log(`🔐 Auth endpoint: http://localhost:${port}/api/auth`);
-      resolve(serverInstance);
+      resolve(server);
     });
 
-    serverInstance.on('error', (error) => {
+    server.on('error', (error) => {
       if (error.code === 'EADDRINUSE') {
         console.log(`⚠️ Port ${port} je zauzet, pokušavam sledeći...`);
         reject(error);
@@ -127,11 +125,7 @@ const startServer = async () => {
   }
 };
 
-// Pokreni server samo ako nije test okruženje
-if (process.env.NODE_ENV !== 'test') {
-  startServer();
-}
+// Pokreni server
+startServer();
 
-module.exports = { app, serverInstance }; 
-
-// trigger GitHub Actions test
+module.exports = app; 
