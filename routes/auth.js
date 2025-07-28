@@ -31,7 +31,7 @@ router.post(
 
     try {
       // ✅ Provera da li korisnik već postoji
-      const userExists = await User.existsByEmail(email);
+      const userExists = await User.emailExists(email);
       if (userExists) {
         return res.status(409).json({ error: 'Korisnik sa ovim email-om već postoji' });
       }

@@ -249,4 +249,84 @@ Role: klijent
 
 ---
 
+## 🧪 Testiranje
+
+### Pokretanje testova
+```bash
+# Pokreni sve testove
+npm test
+
+# Pokreni testove u watch modu
+npm run test:watch
+
+# Pokreni testove sa coverage izveštajem
+npm run test:coverage
+
+# Ili koristi PowerShell skripte
+.\run-tests.ps1
+# Ili automatski sa logovanjem
+.\run-all-tests.ps1
+# Ili višestruko testiranje sa pauzom
+.\auto-test.ps1
+# Ili koristi batch fajl (Windows)
+run-auto-test.bat
+```
+
+### Test struktura
+- **`tests/auth.test.js`** - Pojednostavljeni testovi za autentifikaciju (7 testova)
+- **`tests/salon.test.js`** - Pojednostavljeni testovi za salon funkcionalnost (7 testova)
+- **`tests/services.test.js`** - Pojednostavljeni testovi za usluge funkcionalnost (7 testova)
+- **`tests/appointments.test.js`** - Pojednostavljeni testovi za termine funkcionalnost (12 testova)
+- **`tests/helpers.js`** - Helper funkcije za testove
+- **`tests/setup.js`** - Test konfiguracija
+- **`jest.config.js`** - Jest konfiguracija
+- **`run-all-tests.ps1`** - PowerShell skripta sa automatskim logovanjem
+- **`auto-test.ps1`** - Višestruko testiranje sa pauzom (10 krugova, 60s pauza)
+- **`run-auto-test.bat`** - Batch fajl za pokretanje auto-test.ps1 (Windows)
+
+### Test pokrivenost
+Testovi pokrivaju sve glavne funkcionalnosti:
+
+**🔐 Autentifikacija (7 testova):**
+- ✅ Registracija klijenta i salona
+- ✅ Prijava korisnika
+- ✅ Validacija podataka (nedostajuća polja, neispravne role)
+- ✅ Error handling (pogrešne lozinke, nepostojeći korisnici)
+
+**🏢 Salon funkcionalnost (7 testova):**
+- ✅ Kreiranje salona (samo salon korisnici)
+- ✅ Ažuriranje salona (samo vlasnik)
+- ✅ Brisanje salona (samo vlasnik)
+- ✅ Pregled salona (javno dostupno)
+- ✅ Pregled pojedinačnog salona
+- ✅ Autentifikacija i autorizacija
+- ✅ Error handling
+
+**💇‍♀️ Usluge funkcionalnost (7 testova):**
+- ✅ Kreiranje usluga (samo salon korisnici)
+- ✅ Ažuriranje usluga (samo vlasnik)
+- ✅ Brisanje usluga (samo vlasnik)
+- ✅ Pregled usluga za salon (javno dostupno)
+- ✅ Autentifikacija i autorizacija
+- ✅ Error handling
+
+**📅 Termini funkcionalnost (12 testova):**
+- ✅ Kreiranje termina (samo klijenti)
+- ✅ Pregled termina korisnika (samo vlasnik termina)
+- ✅ Pregled termina salona (samo vlasnik salona)
+- ✅ Ažuriranje statusa termina (samo vlasnik salona)
+- ✅ Autentifikacija i autorizacija
+- ✅ Error handling
+
+### 📝 Logovanje testova
+- **`run-all-tests.ps1`** - Automatski pokreće testove i loguje rezultate
+- **`auto-test.ps1`** - Višestruko testiranje (10 krugova, 60s pauza) sa UTF-8 encoding
+- **`run-auto-test.bat`** - Batch fajl za jednostavno pokretanje (Windows)
+- **Log fajl:** `logs/test-log.txt` sa vremenskim oznakama
+- **Detaljni izlaz** - Kompletan rezultat testova sa greškama
+- **Status indikatori** - Jasni pokazatelji uspeha/neuspeha
+- **UTF-8 podrška** - Pravilno prikazivanje srpskih karaktera
+
+---
+
 **🎯 API je spreman za produkciju i frontend integraciju!** 

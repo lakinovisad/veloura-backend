@@ -101,9 +101,9 @@ const startServer = async () => {
     for (let port = START_PORT; port <= MAX_PORT; port++) {
       try {
         console.log(`🔍 Pokušavam da pokrenem server na portu ${port}...`);
-        await startServerOnPort(port);
+        const server = await startServerOnPort(port);
         console.log(`✅ Server uspešno pokrenut na portu ${port}!`);
-        return; // Uspesno pokrenut, izađi iz funkcije
+        return server; // Vrati server instancu
       } catch (error) {
         if (error.code === 'EADDRINUSE' && port < MAX_PORT) {
           continue; // Pokušaj sledeći port
@@ -125,7 +125,9 @@ const startServer = async () => {
   }
 };
 
-// Pokreni server
-startServer();
+// Pokreni server samo ako nije test environment
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}
 
-module.exports = app; 
+module.exports = { app, startServer }; 
