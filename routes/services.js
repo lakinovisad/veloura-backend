@@ -47,11 +47,68 @@ router.post('/', authenticateToken, requireRole('salon'), async (req, res) => {
   }
 });
 
+// GET /api/services/:id - vraća uslugu po ID-u
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const service = await Service.findById(id);
+    
+    if (!service) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Usluga nije pronađena' 
+      });
+    }
+    
+    res.json({ success: true, data: { service } });
+  } catch (error) {
+    console.error('Greška pri dohvatanju usluge:', error);
+    res.status(500).json({ success: false, message: 'Greška na serveru pri dohvatanju usluge' });
+  }
+});
+
 // GET /api/salons/:salon_id/services - vraća sve usluge za dati salon
 router.get('/salons/:salon_id/services', async (req, res) => {
   try {
     const { salon_id } = req.params;
-    const services = await Service.findBySalonId(salon_id);
+    const { sort, order, search, minPrice, maxPrice } = req.query;
+    
+    let services = await Service.findBySalonId(salon_id);
+    
+    // Pretraživanje po nazivu
+    if (search) {
+      services = services.filter(service => 
+        service.naziv.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    
+    // Filtriranje po ceni
+    if (minPrice) {
+      services = services.filter(service => service.cena >= parseInt(minPrice));
+    }
+    if (maxPrice) {
+      services = services.filter(service => service.cena <= parseInt(maxPrice));
+    }
+    
+    // Sortiranje
+    if (sort === 'price') {
+      services.sort((a, b) => {
+        if (order === 'desc') {
+          return b.cena - a.cena;
+        } else {
+          return a.cena - b.cena;
+        }
+      });
+    } else if (sort === 'name') {
+      services.sort((a, b) => {
+        if (order === 'desc') {
+          return b.naziv.localeCompare(a.naziv);
+        } else {
+          return a.naziv.localeCompare(b.naziv);
+        }
+      });
+    }
+    
     res.json({ success: true, data: { services, count: services.length } });
   } catch (error) {
     console.error('Greška pri dohvatanju usluga:', error);

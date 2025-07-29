@@ -33,6 +33,46 @@ class Service {
     });
   }
 
+  // Dohvati usluge za dati salon sa paginacijom
+  static findBySalonIdPaginated(salon_id, page = 1, limit = 10) {
+    return new Promise((resolve, reject) => {
+      const offset = (page - 1) * limit;
+      
+      // Prvo dohvati ukupan broj usluga
+      db.get('SELECT COUNT(*) as total FROM Services WHERE salon_id = ?', [salon_id], (err, countRow) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        
+        const total = countRow.total;
+        
+        // Zatim dohvati usluge sa paginacijom
+        db.all(
+          'SELECT * FROM Services WHERE salon_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?', 
+          [salon_id, limit, offset], 
+          (err, rows) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve({
+                services: rows,
+                pagination: {
+                  page: parseInt(page),
+                  limit: parseInt(limit),
+                  total,
+                  totalPages: Math.ceil(total / limit),
+                  hasNext: page * limit < total,
+                  hasPrev: page > 1
+                }
+              });
+            }
+          }
+        );
+      });
+    });
+  }
+
   // Pronađi uslugu po ID-u
   static findById(id) {
     return new Promise((resolve, reject) => {

@@ -83,4 +83,148 @@ describe('📌 REVIEWS ROUTES', () => {
     expect(res.statusCode).toBe(400);
     log('Odbijena recenzija sa ocenom van raspona.');
   });
+});
+
+describe('📥 GET /reviews (pregled recenzija)', () => {
+  let clientToken, clientId, salonToken, salonId, serviceId;
+
+  beforeEach(async () => {
+    await clearDatabase();
+
+    // Registruj korisnika (klijent)
+    const client = await registerUser('klijent');
+    clientToken = client.token;
+    clientId = client.user.id;
+
+    // Registruj salon
+    const salon = await registerUser('salon');
+    salonToken = salon.token;
+
+    // Kreiraj salon i uslugu
+    const salonData = await createSalon(salonToken);
+    salonId = salonData.id;
+
+    const serviceData = await createService(salonToken, salonId);
+    serviceId = serviceData.id;
+
+    // Klijent zakazuje i završava termin
+    const appointmentRes = await request(app)
+      .post('/api/appointments')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({
+        salon_id: salonId,
+        service_id: serviceId,
+        datum: '2025-08-01',
+        vreme: '12:00'
+      });
+
+    const appointment = appointmentRes.body.data.appointment;
+
+    await request(app)
+      .put(`/api/appointments/${appointment.id}/status`)
+      .set('Authorization', `Bearer ${salonToken}`)
+      .send({ status: 'završeno' });
+
+    // Klijent ostavlja recenziju
+    await request(app)
+      .post('/api/reviews')
+      .set('Authorization', `Bearer ${clientToken}`)
+      .send({
+        appointment_id: appointment.id,
+        ocena: 5,
+        komentar: 'Odlično!'
+      });
+  });
+
+  it('✅ prikazuje sve recenzije za dati salon', async () => {
+    const res = await request(app)
+      .get(`/api/reviews/salon/${salonId}`)
+      .set('Authorization', `Bearer ${clientToken}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
+    expect(res.body.data[0]).toHaveProperty('komentar');
+  });
+
+  it('✅ prikazuje sve recenzije koje je korisnik ostavio', async () => {
+    const res = await request(app)
+      .get(`/api/reviews/user/${clientId}`)
+      .set('Authorization', `Bearer ${clientToken}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
+    expect(res.body.data[0]).toHaveProperty('komentar');
+  });
+
+  it('❌ neautorizovan pristup vraća 401', async () => {
+    const res = await request(app).get(`/api/reviews/salon/${salonId}`);
+    expect(res.statusCode).toBe(401);
+  });
+});
+
+describe('DELETE /api/reviews/:id', () => {
+  let clientToken, adminToken, salonId, serviceId, appointmentId, reviewId;
+
+  beforeEach(async () => {
+    const client = await registerUser({ role: 'client' });
+    clientToken = await loginUser(client);
+
+    const admin = await registerUser({ role: 'admin' });
+    adminToken = await loginUser(admin);
+
+    const salon = await createSalon(clientToken);
+    salonId = salon.id;
+
+    const service = await createService(clientToken, salonId);
+    serviceId = service.id;
+
+    const appointment = await createAppointment(clientToken, salonId, serviceId);
+    appointmentId = appointment.id;
+
+    await updateAppointmentStatus(clientToken, appointmentId, 'completed');
+
+    const review = await createReview(clientToken, salonId, serviceId, appointmentId);
+    reviewId = review.id;
+  });
+
+  it('dozvoljava vlasniku da obriše svoju recenziju', async () => {
+    const res = await request(app)
+      .delete(`/api/reviews/${reviewId}`)
+      .set('Authorization', `Bearer ${clientToken}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe('Recenzija je obrisana.');
+  });
+
+  it('dozvoljava adminu da obriše tuđu recenziju', async () => {
+    const res = await request(app)
+      .delete(`/api/reviews/${reviewId}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe('Recenzija je obrisana.');
+  });
+
+  it('ne dozvoljava drugom korisniku da obriše tuđu recenziju', async () => {
+    const otherUser = await registerUser({ role: 'client' });
+    const otherToken = await loginUser(otherUser);
+
+    const res = await request(app)
+      .delete(`/api/reviews/${reviewId}`)
+      .set('Authorization', `Bearer ${otherToken}`);
+
+    expect(res.statusCode).toBe(403);
+    expect(res.body.message).toBe('Nemate dozvolu da obrišete ovu recenziju.');
+  });
+
+  it('vraća 404 ako recenzija ne postoji', async () => {
+    const res = await request(app)
+      .delete(`/api/reviews/99999`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.statusCode).toBe(404);
+    expect(res.body.message).toBe('Recenzija nije pronađena.');
+  });
 }); 

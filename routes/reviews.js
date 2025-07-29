@@ -1,6 +1,7 @@
 const express = require('express');
 const Review = require('../models/Review');
 const { authenticateToken } = require('../middleware/auth');
+const { db } = require('../db');
 
 const router = express.Router();
 
@@ -174,42 +175,27 @@ router.put('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// DELETE /api/reviews/:id — briše recenziju (samo vlasnik)
+// DELETE /api/reviews/:id — briše recenziju (samo vlasnik ili admin)
 router.delete('/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+  const userRole = req.user.role;
+
   try {
-    const { id } = req.params;
-    const user_id = req.user.id;
+    const review = await db.get('SELECT * FROM reviews WHERE id = ?', [id]);
 
-    // Pronađi recenziju
-    const review = await Review.findById(id);
     if (!review) {
-      return res.status(404).json({
-        success: false,
-        message: 'Recenzija nije pronađena'
-      });
+      return res.status(404).json({ message: 'Recenzija nije pronađena.' });
     }
 
-    // Provera da li je korisnik vlasnik recenzije
-    if (review.user_id !== user_id) {
-      return res.status(403).json({
-        success: false,
-        message: 'Nemate dozvolu za brisanje ove recenzije'
-      });
+    if (review.user_id !== userId && userRole !== 'admin') {
+      return res.status(403).json({ message: 'Nemate dozvolu da obrišete ovu recenziju.' });
     }
 
-    await Review.delete(id);
-
-    res.json({
-      success: true,
-      message: 'Recenzija uspešno obrisana'
-    });
-
+    await db.run('DELETE FROM reviews WHERE id = ?', [id]);
+    res.json({ message: 'Recenzija je obrisana.' });
   } catch (error) {
-    console.error('Greška pri brisanju recenzije:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Greška na serveru pri brisanju recenzije'
-    });
+    res.status(500).json({ message: 'Greška prilikom brisanja recenzije.', error });
   }
 });
 
