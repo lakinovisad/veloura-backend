@@ -1,26 +1,32 @@
-name: ✅ CI - Veloura Backend Tests
+name: CI - Veloura Backend Tests
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: ["main", "dev"]
   pull_request:
-    branches: [ main, dev ]
+    branches: ["main", "dev"]
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 🔄 Checkout kod
-      uses: actions/checkout@v3
+      - name: 📂 Checkout repository
+        uses: actions/checkout@v3
 
-    - name: 🟢 Instaliraj Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 18
+      - name: 🔄 Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-    - name: 📦 Instaliraj dependencije
-      run: npm install
+      - name: 📦 Install dependencies
+        run: npm install
 
-    - name: 🧪 Pokreni testove
-      run: npm test 
+      - name: 📊 Run tests with coverage
+        run: npm test -- --coverage
+
+      - name: 📁 Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage 
