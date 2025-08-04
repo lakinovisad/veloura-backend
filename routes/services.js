@@ -5,6 +5,63 @@ const { authenticateToken, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /api/services:
+ *   post:
+ *     summary: Kreira novu uslugu
+ *     tags: [Services]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - naziv
+ *               - cena
+ *               - trajanje
+ *             properties:
+ *               naziv:
+ *                 type: string
+ *                 description: Naziv usluge
+ *               cena:
+ *                 type: number
+ *                 description: Cena usluge
+ *               trajanje:
+ *                 type: number
+ *                 description: Trajanje usluge u minutima
+ *               opis:
+ *                 type: string
+ *                 description: Opis usluge (opciono)
+ *     responses:
+ *       201:
+ *         description: Usluga uspešno kreirana
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     service:
+ *                       $ref: '#/components/schemas/Service'
+ *       400:
+ *         description: Neispravni podaci
+ *       401:
+ *         description: Neautorizovan pristup
+ *       403:
+ *         description: Nemate dozvolu za kreiranje usluge
+ *       500:
+ *         description: Greška na serveru
+ */
 // POST /api/services - kreira novu uslugu (samo za vlasnika salona)
 router.post('/', authenticateToken, requireRole('salon'), async (req, res) => {
   try {
@@ -47,6 +104,40 @@ router.post('/', authenticateToken, requireRole('salon'), async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/services/{id}:
+ *   get:
+ *     summary: Dohvata uslugu po ID-u
+ *     tags: [Services]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID usluge
+ *     responses:
+ *       200:
+ *         description: Usluga pronađena
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     service:
+ *                       $ref: '#/components/schemas/Service'
+ *       404:
+ *         description: Usluga nije pronađena
+ *       500:
+ *         description: Greška na serveru
+ */
 // GET /api/services/:id - vraća uslugu po ID-u
 router.get('/:id', async (req, res) => {
   try {

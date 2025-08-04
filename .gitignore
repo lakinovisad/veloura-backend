@@ -22,4 +22,8 @@ coverage/
 .idea/
 *.swp
 *.swo
-*~ 
+*~
+
+# Swagger export fajlovi
+swagger-output.json
+api-docs.html 

@@ -4,6 +4,64 @@ const { authenticateToken, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /api/salons:
+ *   post:
+ *     summary: Kreira novi salon
+ *     tags: [Salons]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - naziv
+ *               - lokacija
+ *             properties:
+ *               naziv:
+ *                 type: string
+ *                 description: Naziv salona
+ *               lokacija:
+ *                 type: string
+ *                 description: Lokacija salona
+ *               opis:
+ *                 type: string
+ *                 description: Opis salona (opciono)
+ *               radno_vreme:
+ *                 type: string
+ *                 description: Radno vreme (opciono)
+ *     responses:
+ *       201:
+ *         description: Salon uspešno kreiran
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     salon:
+ *                       $ref: '#/components/schemas/Salon'
+ *       400:
+ *         description: Neispravni podaci
+ *       401:
+ *         description: Neautorizovan pristup
+ *       403:
+ *         description: Nemate dozvolu za kreiranje salona
+ *       409:
+ *         description: Već imate registrovan salon
+ *       500:
+ *         description: Greška na serveru
+ */
 // POST /api/salons - kreira novi salon (samo za korisnike sa role: "salon")
 router.post('/', authenticateToken, requireRole('salon'), async (req, res) => {
   try {
@@ -53,6 +111,34 @@ router.post('/', authenticateToken, requireRole('salon'), async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/salons:
+ *   get:
+ *     summary: Dohvata sve salone
+ *     tags: [Salons]
+ *     responses:
+ *       200:
+ *         description: Lista svih salona
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     salons:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Salon'
+ *                     count:
+ *                       type: number
+ *       500:
+ *         description: Greška na serveru
+ */
 // GET /api/salons - vraća sve salone
 router.get('/', async (req, res) => {
   try {
@@ -75,6 +161,40 @@ router.get('/', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/salons/{id}:
+ *   get:
+ *     summary: Dohvata salon po ID-u
+ *     tags: [Salons]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID salona
+ *     responses:
+ *       200:
+ *         description: Salon pronađen
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     salon:
+ *                       $ref: '#/components/schemas/Salon'
+ *       404:
+ *         description: Salon nije pronađen
+ *       500:
+ *         description: Greška na serveru
+ */
 // GET /api/salons/:id - vraća jedan salon po ID-u
 router.get('/:id', async (req, res) => {
   try {
@@ -104,6 +224,99 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/salons/{id}/services:
+ *   get:
+ *     summary: Dohvata usluge salona sa paginacijom i filtriranjem
+ *     tags: [Salons]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID salona
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Broj stranice
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Broj usluga po stranici
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Pretraživanje po nazivu usluge
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: integer
+ *         description: Minimalna cena
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: integer
+ *         description: Maksimalna cena
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [price, name]
+ *         description: Sortiranje po polju
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
+ *         description: Redosled sortiranja
+ *     responses:
+ *       200:
+ *         description: Usluge salona
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     services:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Service'
+ *                     count:
+ *                       type: number
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         page:
+ *                           type: integer
+ *                         limit:
+ *                           type: integer
+ *                         total:
+ *                           type: integer
+ *                         totalPages:
+ *                           type: integer
+ *                         hasNext:
+ *                           type: boolean
+ *                         hasPrev:
+ *                           type: boolean
+ *       404:
+ *         description: Salon nije pronađen
+ *       500:
+ *         description: Greška na serveru
+ */
 // GET /api/salons/:id/services - vraća sve usluge za dati salon sa paginacijom
 router.get('/:id/services', async (req, res) => {
   try {

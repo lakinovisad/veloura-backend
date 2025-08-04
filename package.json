@@ -20,6 +20,8 @@
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^7.0.5",
     "sqlite3": "^5.1.6",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
@@ -34,6 +36,10 @@
     "api",
     "veloura"
   ],
+  "jest": {
+    "testEnvironment": "node",
+    "detectOpenHandles": true
+  },
   "author": "",
   "license": "MIT"
 }

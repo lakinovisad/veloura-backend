@@ -2,6 +2,8 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./swagger');
 const { initDatabase } = require('./db');
 const authRoutes = require('./routes/auth');
 const salonRoutes = require('./routes/salons');
@@ -17,6 +19,18 @@ const MAX_PORT = 3010;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Swagger dokumentacija
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Veloura API Dokumentacija'
+}));
+
+// Swagger JSON endpoint za eksport
+app.get('/swagger.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpecs);
+});
 
 // Rute
 app.use('/api/auth', authRoutes);

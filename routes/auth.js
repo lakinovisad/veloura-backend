@@ -12,6 +12,64 @@ const router = express.Router();
 // JWT secret key (u produkciji bi trebalo da bude u environment varijabli)
 const JWT_SECRET = process.env.JWT_SECRET || 'veloura-secret-key-2024';
 
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Registruje novog korisnika
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *               - role
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Ime korisnika
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Email adresa
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *                 description: Lozinka (minimum 6 karaktera)
+ *               role:
+ *                 type: string
+ *                 enum: [klijent, salon]
+ *                 description: Uloga korisnika
+ *               phone:
+ *                 type: string
+ *                 description: Broj telefona (opciono)
+ *     responses:
+ *       201:
+ *         description: Korisnik uspešno registrovan
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                 token:
+ *                   type: string
+ *                   description: JWT token
+ *       400:
+ *         description: Neispravni podaci
+ *       409:
+ *         description: Korisnik već postoji
+ *       500:
+ *         description: Greška na serveru
+ */
 // POST /register - registruje novog korisnika
 router.post(
   '/register',
@@ -59,6 +117,51 @@ router.post(
   }
 );
 
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Prijavljuje korisnika
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Email adresa
+ *               password:
+ *                 type: string
+ *                 description: Lozinka
+ *     responses:
+ *       200:
+ *         description: Uspešna prijava
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                 token:
+ *                   type: string
+ *                   description: JWT token
+ *       400:
+ *         description: Neispravni podaci
+ *       401:
+ *         description: Pogrešan email ili lozinka
+ *       500:
+ *         description: Greška na serveru
+ */
 // POST /login - autentifikacija korisnika
 router.post(
   '/login',
@@ -107,6 +210,31 @@ router.post(
   }
 );
 
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   get:
+ *     summary: Dohvata profil trenutnog korisnika
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profil korisnika
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Token je potreban za pristup
+ *       500:
+ *         description: Greška na serveru
+ */
 // GET /profile - dohvati profil trenutnog korisnika (zaštićen endpoint)
 router.get('/profile', async (req, res) => {
   try {
