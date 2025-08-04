@@ -8,7 +8,9 @@
     "dev": "nodemon server.js",
     "test": "cross-env NODE_ENV=test jest",
     "test:watch": "cross-env NODE_ENV=test jest --watch",
-    "test:coverage": "cross-env NODE_ENV=test jest --coverage"
+    "test:coverage": "cross-env NODE_ENV=test jest --coverage",
+    "test:verbose": "cross-env NODE_ENV=test jest --verbose",
+    "test:ci": "cross-env NODE_ENV=test jest --coverage --ci --watchAll=false"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
