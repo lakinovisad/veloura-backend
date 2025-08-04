@@ -34,7 +34,7 @@ jobs:
           ls -la .git
 
       - name: 🧪 Run tests with coverage
-        run: npm test -- --coverage --runInBand
+        run: npm test -- --coverage --runInBand --maxWorkers=50%
 
       - name: 📤 Upload coverage report
         if: success() || failure()
