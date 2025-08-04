@@ -26,6 +26,13 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
+      - name: 🧪 Debug Git info pre testova
+        run: |
+          git status
+          git log -1
+          git config --get remote.origin.url
+          ls -la .git
+
       - name: 🧪 Run tests with coverage
         run: npm test -- --coverage
 
