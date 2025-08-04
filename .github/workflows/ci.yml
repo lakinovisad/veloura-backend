@@ -8,6 +8,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
 
     steps:
       - name: 📥 Checkout repo
@@ -17,7 +20,7 @@ jobs:
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ matrix.node-version }}
         # Updated to v4 for compatibility with latest Node versions
 
       - name: 📦 Install dependencies
@@ -31,6 +34,6 @@ jobs:
         if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
+          name: coverage-report-${{ matrix.node-version }}
           path: coverage/
         # Updated to v4 to avoid deprecation issues 
