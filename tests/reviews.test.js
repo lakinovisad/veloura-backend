@@ -3,8 +3,16 @@ const app = require('../server');
 const db = require('../db');
 const helpers = require('./helpers');
 const fs = require('fs');
+const path = require('path');
 
 const LOG_FILE = 'logs/test-log.txt';
+const LOG_DIR = path.dirname(LOG_FILE);
+
+// Ensure logs directory exists
+if (!fs.existsSync(LOG_DIR)) {
+  fs.mkdirSync(LOG_DIR, { recursive: true });
+}
+
 const log = msg => fs.appendFileSync(LOG_FILE, `[reviews] ${msg}\n`);
 
 let tokens = {};
