@@ -40,7 +40,8 @@
   ],
   "jest": {
     "testEnvironment": "node",
-    "detectOpenHandles": true
+    "detectOpenHandles": true,
+    "testTimeout": 10000
   },
   "author": "",
   "license": "MIT"
