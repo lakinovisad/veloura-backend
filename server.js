@@ -16,7 +16,10 @@ const START_PORT = process.env.PORT || 3001;
 const MAX_PORT = 3010;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:5173", "https://stalwart-rabanadas-075403.netlify.app"],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

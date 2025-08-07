@@ -1,6 +1,6 @@
 # 💇‍♀️ Veloura Backend API
 
-![CI](https://github.com/lakinovisad/veloura-backend/actions/workflows/ci.yml/badge.svg)
+![CI Status](https://github.com/tvoj-user/tvoj-repo/actions/workflows/ci.yml/badge.svg)
 
 Node.js + Express + SQLite backend za aplikaciju za salone, korisnike i zakazivanje termina.
 

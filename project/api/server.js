@@ -15,7 +15,8 @@ const MAX_PORT = 3010;
 
 // Middleware
 app.use(cors({
-  origin: '*', // ili preciznije: ['http://localhost:3000', 'https://moj-front.netlify.app']
+  origin: ["http://localhost:5173", "https://stalwart-rabanadas-075403.netlify.app"],
+  credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));

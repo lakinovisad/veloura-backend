@@ -1,10 +1,12 @@
-import api from './api';
+import { api, setToken, clearToken, getToken } from './client';
+
+export type Role = "client" | "owner" | "admin";
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'klijent' | 'salon';
+  role: Role;
   phone?: string;
   created_at: string;
 }
@@ -18,7 +20,7 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
-  role: 'klijent' | 'salon';
+  role: Role;
   phone?: string;
 }
 
@@ -28,6 +30,37 @@ export interface AuthResponse {
   token: string;
 }
 
+// Streamlined function-based API (new approach)
+export async function register(payload: {
+  email: string;
+  password: string;
+  role: Role;
+  name?: string;
+}) {
+  const { data } = await api.post("/auth/register", payload);
+  if (data?.token) setToken(data.token);
+  return data;
+}
+
+export async function login(payload: { email: string; password: string }) {
+  const { data } = await api.post("/auth/login", payload);
+  if (data?.token) setToken(data.token);
+  return data;
+}
+
+export function logout() {
+  clearToken();
+  localStorage.removeItem('user');
+  // Redirect na login stranicu
+  window.location.href = '/prijava';
+}
+
+export async function me() {
+  const { data } = await api.get("/auth/me");
+  return data;
+}
+
+// Class-based API (for backward compatibility)
 class AuthService {
   // Login korisnika
   async login(data: LoginData): Promise<AuthResponse> {
@@ -36,7 +69,7 @@ class AuthService {
       const { user, token } = response.data;
       
       // Sačuvaj token i user data u localStorage
-      localStorage.setItem('token', token);
+      setToken(token);
       localStorage.setItem('user', JSON.stringify(user));
       
       return response.data;
@@ -52,7 +85,7 @@ class AuthService {
       const { user, token } = response.data;
       
       // Sačuvaj token i user data u localStorage
-      localStorage.setItem('token', token);
+      setToken(token);
       localStorage.setItem('user', JSON.stringify(user));
       
       return response.data;
@@ -83,7 +116,7 @@ class AuthService {
 
   // Logout korisnika
   logout(): void {
-    localStorage.removeItem('token');
+    clearToken();
     localStorage.removeItem('user');
     // Redirect na login stranicu
     window.location.href = '/prijava';
@@ -91,7 +124,7 @@ class AuthService {
 
   // Proveri da li je korisnik ulogovan
   isAuthenticated(): boolean {
-    return !!localStorage.getItem('token');
+    return !!getToken();
   }
 
   // Dohvati trenutnog korisnika iz localStorage
@@ -101,8 +134,8 @@ class AuthService {
   }
 
   // Dohvati token
-  getToken(): string | null {
-    return localStorage.getItem('token');
+  getAuthToken(): string | null {
+    return getToken();
   }
 }
 

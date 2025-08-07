@@ -7,38 +7,32 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node-version: [18, 20]
-      fail-fast: false  # Ne prekida drugi build ako jedan padne
 
     steps:
-      # 📥 Checkout sa punom istorijom
       - name: 🧾 Checkout sa punom istorijom
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      # ⚙️ Postavi Node.js verziju
       - name: 🛠️ Postavi Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
 
-      # 🔧 Konfiguriši Git da reši exit code 128
       - name: 🔧 Konfiguriši Git
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-      # 📦 Instaliraj dependencije
       - name: 📦 Instaliraj dependencije
         run: npm ci
 
-      # 📁 Kreiraj logs/ folder
       - name: 🛠️ Kreiraj logs/ folder
         run: mkdir -p logs
 
-      # 🧠 Git info (sigurno)
       - name: 🧠 Git info (sigurno)
         run: |
           git status || true
@@ -47,25 +41,25 @@ jobs:
           git config --get remote.origin.url || true
           ls -la .git || true
 
-      # 🧪 Pokreni testove sa coverage (ne prekida pipeline ako padnu)
       - name: 🧪 Pokreni testove sa coverage
-        run: npm test -- --coverage || true
+        run: npm test -- --coverage --detectOpenHandles --forceExit || true
 
-      # 🔍 Proveri da li coverage/ folder postoji
       - name: 🔍 Proveri coverage folder
+        id: check_coverage
         run: |
           if [ -d "coverage" ]; then
+            echo "coverage_exists=true" >> $GITHUB_OUTPUT
             echo "✅ Coverage folder postoji"
             ls -la coverage/
           else
+            echo "coverage_exists=false" >> $GITHUB_OUTPUT
             echo "⚠️ Coverage folder ne postoji"
           fi
 
-      # 📈 Upload coverage rezultata (samo ako coverage/ postoji)
       - name: 📈 Upload coverage rezultata
-        if: success() || failure()
+        if: steps.check_coverage.outputs.coverage_exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: code-coverage-report-${{ matrix.node-version }}
           path: coverage/
-          if-no-files-found: ignore  # Preskače ako nema fajlova 
+          if-no-files-found: ignore 
